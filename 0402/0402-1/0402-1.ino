@@ -57,7 +57,7 @@ void adjust(){
   if(cnt == 0)
   {
     if(turn_mode==LEFT)MotorWrite(70, -60);
-      else if(turn_mode==RIGHT)MotorWrite(-60, 70);
+    else if(turn_mode==RIGHT)MotorWrite(-60, 70);
   }
   else{
     average = total / cnt; // calculate the current average
@@ -73,7 +73,7 @@ void adjust(){
       MotorWrite(V_s + K_p * offset - K_d * diff + K_i * sum_offset, V_s - K_p * offset + K_d * diff - K_i * sum_offset);
     }
     else {
-      delay(700); // keep going until reach the RFID.
+      delay(500); // keep going until reach the RFID.
       if(turn_mode==LEFT)MotorWrite(100, -100);
       else if(turn_mode==RIGHT)MotorWrite(-100, 100);
       delay(300); // turn around
