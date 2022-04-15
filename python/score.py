@@ -28,7 +28,11 @@ class Scoreboard:
         print ("Successfully read the UID file!")
 
     def add_UID(self, UID_str):
-        UID = int(UID_str,16)	# hex to dec
+        try:
+            UID = int(UID_str,16)	# hex to dec
+        except:
+            print("Invalid UID!")
+            return
 		
         if UID not in self.cardList:
             print("This UID doesn't exist in the UID list file:", hex(UID))

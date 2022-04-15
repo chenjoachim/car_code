@@ -42,11 +42,11 @@ class bluetooth:
     '''
     #receive str message from the car
     def SerialReadByte(self):
-        sleep(0.05)
-        waiting = self.ser.inWaiting()
-        rv = self.ser.read(waiting)
-        if(rv):
+        # sleep(0.05)
+        if(self.ser.in_waiting > 0):
+        # if(True):
             receiveMsg = self.ser.readline().decode("utf-8")[:-1]
+            # receiveMsg = input("Test message: ")
             self.ser.flushInput()
             return receiveMsg
         else:

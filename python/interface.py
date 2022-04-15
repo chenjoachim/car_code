@@ -17,18 +17,22 @@ class interface:
                 quit()
             port = input("PC bluetooth port name: ")
         input("Press enter to start.")
-        self.ser.SerialWrite('start\n')
+        #self.ser.SerialWrite('start\n')
 
-    def get_message(self):
+    def get_message(self) -> str:
         #TODO: seperate RFID code and node arrival
         rv = self.ser.SerialReadByte()
         #reach Nd
-        if (rv == 'Nd\n'):
+        if (rv == ""):
+            return ""
+        elif (rv == 'Nd'):
             #TODO: send next direction
-            pass
+            print("We are at node!")
+            return "Node"
         else:
             #send RFID to score
-            pass
+            print("UID received: " + rv)
+            return rv
 
     def send_action(self,dirc):
         # TODO : send the action to car
