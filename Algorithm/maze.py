@@ -1,4 +1,4 @@
-from re import L
+from re import A, L
 from node import *
 import numpy as np
 import csv
@@ -73,25 +73,55 @@ class Maze:
         TURN = 0.0       # the time taken to turn left or turn right per time
         REVRESE = 0.0    # the time taken to reverse once
 
-        visit = [False for i in range (0, self.num)]  # an array determine whether a point is visited
-        visit[nd_from] = True
+        INFTY = 1e5
+        dist = [INFTY for i in range(0, self.num + 1)]    # record the shortest distance between the path from nd_from to any point
+        last_point = [0 for i in range(0, self.num + 1)]  # record the last point (index) in the BFS (record the path) 
+        # note that if we know in the shortest path from a to b the last point before b is c (a -----> c -> b)
+        # then the shortest path from a to b is the shortest path from a to c and go through the path between b and c
 
         # Begin to BFS, q_bfs means the queue for BFS
-        # q_bfs storing three-termed tuple, (current_point, the time has been taken, the direction of the last point to this point)
+        # q_bfs storing three-termed tuple, (current_point, the direction of the last point to this point)
         q_bfs = queue.Queue()      
-        q_bfs.put((nd_from, 0, 0))  
+        q_bfs.put((nd_from, 0))  
+        dist[nd_from] = 0       # initialize
 
         while True:
             if q_bfs.empty(): 
                 print("QueueEmptyError")
                 break
             
+            now = q_bfs.get()
+            curr_idx = now[0]                # return the current node index
+            curr_dir = now[1]                # return the direction from the last node
+            curr_node = self.nd_dict[curr_idx]   # return the current node object (type: Node)
+
+            print("curr_idx", curr_idx)
+            print("curr_dir", curr_dir)
+            print("curr_node", curr_node)
+
+            for neighbor in curr_node.getSuccessors():   # getSuccessors (0: successors, 1: direction, 2: length)
+                adj_idx = int(neighbor[0])
+                adj_dir = neighbor[1]
+                adj_len = neighbor[2]
+                print("adj_idx", adj_idx)
+                print("adj_dir", adj_dir)
+                print("adj_len", adj_len)
+
+                total_dist = dist[curr_idx] + STRAIGHT * adj_len
+                if curr_dir != adj_dir and curr_dir != 0:  # curr_dir = 0 means that it is at the starting point
+                    total_dist += TURN
+
+                print("total_dist", total_dist)
+
+                if total_dist < dist[adj_idx]:   # never put equal sign here to prevent infinite loop
+                    dist[adj_idx] = total_dist
+                    last_point[adj_idx] = curr_idx
+                    q_bfs.put(adj_idx, adj_dir)
             
-
-
-
-        
-        return None
+            if (q_bfs.empty()):
+                break
+            
+        return dist[nd_to]
 
     def getAction(self, car_dir, nd_from, nd_to):
         # TODO : get the car action
@@ -110,4 +140,6 @@ if __name__ == '__main__':
 
     # medium_maze.csv is in the file
     test_maze = Maze('medium_maze.csv')  
+
+    print(test_maze.BFS_two_points(1, 3))
    
