@@ -1,5 +1,7 @@
 from enum import IntEnum
 
+from numpy import ndarray
+
 # You can get the enumeration based on integer value, or make comparison
 # ex: d = Direction(1), then d would be Direction.NORTH
 # ex: print(Direction.SOUTH == 1) should return False
@@ -31,13 +33,30 @@ class Node:
 
     def getDirection(self, nd):
         # TODO : if nd is adjacent to the present node, return the direction of nd from the present node
-		# For example, if the direction of nd from the present node is EAST, then return Direction.EAST = 4
+        # For example, if the direction of nd from the present node is EAST, then return Direction.EAST = 4
 		# However, if nd is not adjacent to the present node, print error message and return 0 
-        return
+        for succ in self.Successors:
+            if succ[0] == nd:
+                return succ[1]
+        
+        print("Error Occurs")
+        return 0
 
     def isSuccessor(self, nd):
         for succ in self.Successors:
             if succ[0] == nd: 
                 return True
         return False
+
+# For test
+if __name__ == '__main__':
+    nd = Node(1)
+    nd.setSuccessor(2, Direction.SOUTH, 3)
+    nd.setSuccessor(4, Direction.NORTH)
+
+    print(nd.getDirection(2))
+    print(nd.getDirection(4))
+    print(nd.getDirection(3))
+
+
 
