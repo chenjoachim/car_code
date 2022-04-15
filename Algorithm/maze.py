@@ -1,3 +1,4 @@
+from cgi import test
 from re import A, L
 from node import *
 import numpy as np
@@ -70,29 +71,29 @@ class Maze:
 
         # define the constant (parameters needed to be tested and revised)
         STRAIGHT = 1.0   # the time taken to go straight line per length unit
-        TURN = 0.0       # the time taken to turn left or turn right per time
-        REVRESE = 0.0    # the time taken to reverse once
+        TURN = 0.6       # the time taken to turn left or turn right per time
 
         INFTY = 1e5
         dist = [INFTY for i in range(0, self.num + 1)]    # record the shortest distance between the path from nd_from to any point
         last_point = [0 for i in range(0, self.num + 1)]  # record the last point (index) in the BFS (record the path) 
+        last_dir = [0 for i in range(0, self.num + 1)]    # record the direction from the last point to the present point
+        # self.num + 1 for the better indexing (from 1 to self.num)
         # note that if we know in the shortest path from a to b the last point before b is c (a -----> c -> b)
         # then the shortest path from a to b is the shortest path from a to c and go through the path between b and c
 
         # Begin to BFS, q_bfs means the queue for BFS
         # q_bfs storing three-termed tuple, (current_point, the direction of the last point to this point)
         q_bfs = queue.Queue()      
-        q_bfs.put((nd_from, 0))  
+        q_bfs.put(nd_from)  
         dist[nd_from] = 0       # initialize
 
         while True:
             if q_bfs.empty(): 
                 print("QueueEmptyError")
                 break
-            
-            now = q_bfs.get()
-            curr_idx = now[0]                # return the current node index
-            curr_dir = now[1]                # return the direction from the last node
+             
+            curr_idx = q_bfs.get()               # return the current node index
+            curr_dir = last_dir[curr_idx]        # return the direction from the last node
             curr_node = self.nd_dict[curr_idx]   # return the current node object (type: Node)
 
             '''
@@ -123,23 +124,61 @@ class Maze:
                 if total_dist < dist[adj_idx]:       # never put equal sign here to prevent infinite loop
                     dist[adj_idx] = total_dist
                     last_point[adj_idx] = curr_idx
-                    q_bfs.put((adj_idx, adj_dir))    # put a tuple inside 
+                    last_dir[adj_idx] = adj_dir
+                    q_bfs.put(adj_idx)    # put a tuple inside 
             
             if (q_bfs.empty()):
                 break
             
         '''
+        print("print all the distance from the point nd_from")
         for i in range(1, 13):
             print(i, dist[i])
         '''
 
-        return dist[nd_to]
+        print("The distance between nd_from to nd_to is ", dist[nd_to])
+
+        route = []
+        passing_node = nd_to
+        while (passing_node != 0):   # last_point[nd_from] == 0
+            route.append(passing_node)
+            passing_node = last_point[passing_node]
+        route.reverse()
+
+        return route
 
     def getAction(self, car_dir, nd_from, nd_to):
         # TODO : get the car action
         # Tips : return an action and the next direction of the car if the nd_to is the Successor of nd_to
 		# If not, print error message and return 0
-        return None
+        next_dir = self.nd_dict[nd_from].getDirection(nd_to)
+
+        '''
+        print("Next Direction", next_dir)
+        '''
+        
+        act = Action
+        if next_dir == car_dir:
+            act = Action.ADVANCE
+        elif next_dir + car_dir == 3 or next_dir + car_dir == 7:
+            act = Action.U_TURN
+        elif (car_dir == Direction.NORTH and next_dir == Direction.WEST) or (car_dir == Direction.SOUTH and next_dir == Direction.EAST):
+            act = Action.TURN_LEFT
+        elif (car_dir == Direction.WEST and next_dir == Direction.SOUTH) or (car_dir == Direction.EAST and next_dir == Direction.NORTH):
+            act = Action.TURN_LEFT
+        elif (car_dir == Direction.NORTH and next_dir == Direction.EAST) or (car_dir == Direction.SOUTH and next_dir == Direction.WEST):
+            act = Action.TURN_RIGHT
+        elif (car_dir == Direction.WEST and next_dir == Direction.NORTH) or (car_dir == Direction.EAST and next_dir == Direction.SOUTH):
+            act = Action.TURN_RIGHT
+        else:
+            act = Action.HALT
+            print("CarActionError")
+
+        return act
+
+    # the same as what we have implemented in the Node class
+    def get_two_point_Diection(self, nd_from, nd_to):
+        return self.nd_dict[nd_from].getDirection(nd_to)
 
     def strategy(self, nd):
         return self.BFS(nd)
@@ -154,4 +193,22 @@ if __name__ == '__main__':
     test_maze = Maze('medium_maze.csv')  
 
     print(test_maze.BFS_two_points(9, 7))
+    print(test_maze.getAction(Direction.NORTH, 10, 11))
+
+    # it is a list consisting of all points we need to pass by
+    path = test_maze.BFS_two_points(9, 7)
+    print("path", path)
+
+    # initialize as NORTH
+    now_dir = Direction.NORTH
+
+    # get an action list
+    action = []
+    for i in range (0, len(path) - 1):
+        _act = test_maze.getAction(now_dir, path[i], path[i + 1])
+        now_dir = test_maze.get_two_point_Diection(path[i], path[i + 1])
+        action.append(_act)
+    
+    print(action)
+    
    

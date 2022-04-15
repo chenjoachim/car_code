@@ -39,7 +39,7 @@ class Node:
             if succ[0] == nd:
                 return succ[1]
         
-        print("Error Occurs")
+        print("DirectionError")
         return 0
 
     def isSuccessor(self, nd):
