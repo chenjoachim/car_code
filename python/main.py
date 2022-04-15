@@ -23,6 +23,9 @@ def main():
     elif (sys.argv[1] == '1'):
         print("Mode 1: Self-testing mode.")
         # TODO: You can write your code to test specific function.
+        
+        
+        
 
 if __name__ == '__main__':
     main()

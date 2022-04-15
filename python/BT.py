@@ -29,23 +29,27 @@ class bluetooth:
         send = output.encode("utf-8")
         self.ser.write(send)
 
+    '''
+    This part may not be needed
     def SerialReadString(self):
         # TODO: Get the information from Bluetooth. Notice that the return type should be transformed into hex.
+        
         waiting = self.ser.in_waiting
         if waiting >= 0:
             rv = self.ser.read(1).decode("utf-8") 
             return rv
         return ""
-
+    '''
+    #receive str message from the car
     def SerialReadByte(self):
         sleep(0.05)
         waiting = self.ser.inWaiting()
         rv = self.ser.read(waiting)
         if(rv):
-            UID = hex(int.from_bytes(rv, byteorder='big', signed=False))
+            receiveMsg = self.ser.readline().decode("utf-8")[:-1]
             self.ser.flushInput()
-            return UID
+            return receiveMsg
         else:
-            return 0
+            return ""
 
 
