@@ -95,32 +95,44 @@ class Maze:
             curr_dir = now[1]                # return the direction from the last node
             curr_node = self.nd_dict[curr_idx]   # return the current node object (type: Node)
 
+            '''
             print("curr_idx", curr_idx)
             print("curr_dir", curr_dir)
             print("curr_node", curr_node)
+            '''
 
             for neighbor in curr_node.getSuccessors():   # getSuccessors (0: successors, 1: direction, 2: length)
                 adj_idx = int(neighbor[0])
                 adj_dir = neighbor[1]
                 adj_len = neighbor[2]
+
+                '''
                 print("adj_idx", adj_idx)
                 print("adj_dir", adj_dir)
                 print("adj_len", adj_len)
+                '''
 
                 total_dist = dist[curr_idx] + STRAIGHT * adj_len
                 if curr_dir != adj_dir and curr_dir != 0:  # curr_dir = 0 means that it is at the starting point
                     total_dist += TURN
-
+                
+                '''
                 print("total_dist", total_dist)
+                '''
 
-                if total_dist < dist[adj_idx]:   # never put equal sign here to prevent infinite loop
+                if total_dist < dist[adj_idx]:       # never put equal sign here to prevent infinite loop
                     dist[adj_idx] = total_dist
                     last_point[adj_idx] = curr_idx
-                    q_bfs.put(adj_idx, adj_dir)
+                    q_bfs.put((adj_idx, adj_dir))    # put a tuple inside 
             
             if (q_bfs.empty()):
                 break
             
+        '''
+        for i in range(1, 13):
+            print(i, dist[i])
+        '''
+
         return dist[nd_to]
 
     def getAction(self, car_dir, nd_from, nd_to):
@@ -141,5 +153,5 @@ if __name__ == '__main__':
     # medium_maze.csv is in the file
     test_maze = Maze('medium_maze.csv')  
 
-    print(test_maze.BFS_two_points(1, 3))
+    print(test_maze.BFS_two_points(9, 7))
    
