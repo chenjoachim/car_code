@@ -1,4 +1,5 @@
 import BT
+import sys
 import maze
 import score
 
@@ -17,7 +18,12 @@ class interface:
                 quit()
             port = input("PC bluetooth port name: ")
         input("Press enter to start.")
-        #self.ser.SerialWrite('start\n')
+        try:
+            self.ser.SerialWrite('start\n')
+            print("Start send succesfully")
+        except:
+            print("writing fail!")
+            sys.exit(1)
 
     def get_message(self) -> str:
         #TODO: seperate RFID code and node arrival

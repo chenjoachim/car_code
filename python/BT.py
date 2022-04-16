@@ -48,6 +48,9 @@ class bluetooth:
             receiveMsg = self.ser.readline().decode("utf-8")[:-1]
             # receiveMsg = input("Test message: ")
             self.ser.flushInput()
+            if (len(receiveMsg) > 0): 
+                receiveMsg = receiveMsg.replace(' ', '')      
+                print(receiveMsg)
             return receiveMsg
         else:
             return ""

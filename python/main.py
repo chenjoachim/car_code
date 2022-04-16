@@ -29,7 +29,6 @@ def main():
             
             #Part 1: read message
             rv = interf.get_message()
-            print(rv)
             if (rv == ""):          pass
             elif (rv == "Node"):    Node_position = Node_position + 1
             else:                   point.add_UID(rv)
