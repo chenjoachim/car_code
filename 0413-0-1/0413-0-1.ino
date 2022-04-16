@@ -49,7 +49,7 @@ void adjust(){
   double average = 0;
   double offset = 0;
   
-  for(int i = 0; i < 4; i++){
+  for(int i = 0; i < 5; i++){
     if(digitalRead(Sensor[i]) == HIGH){
       cnt++;
       total += i;
@@ -75,17 +75,18 @@ void adjust(){
       MotorWrite(V_s + K_p * offset - K_d * diff + K_i * sum_offset, V_s - K_p * offset + K_d * diff - K_i * sum_offset);
     }
     else {
+      BT.print("Nd\n"); 
       Serial.println("Nd");
-      //BT.print("Nd\n"); 
-      delay(500); // keep going until reach the RFID.
+      
+      delay(600); // keep going until reach the RFID.
       if(turn_mode==LEFT)
       {
-        MotorWrite(100, -100);
+        MotorWrite(80, -80);
         delay(300);//turn left
       }
       else if(turn_mode==RIGHT)
       {
-        MotorWrite(-100, 100);
+        MotorWrite(-80, 80);
         delay(300);//turn right
       }
       else if(turn_mode==STRAIGHT)
@@ -94,8 +95,8 @@ void adjust(){
       }
       else if(turn_mode==RETURN)
       {
-        MotorWrite(-100,100);
-        delay(600);//turn around
+        MotorWrite(-80,80);
+        delay(750);//turn around
       }
     }
     
@@ -236,6 +237,8 @@ void loop() {
    mfrc522->PICC_HaltA(); // 讓同一張卡片進入停止模式 (只顯示一次)
    mfrc522->PCD_StopCrypto1(); // 停止 Crypto1
    MotorWrite(0,0);
+   delay(100);
+   MotorWrite(100,100);
    delay(100);
    FuncEnd:; // goto 跳到這.
 }
