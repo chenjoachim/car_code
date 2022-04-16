@@ -1,5 +1,4 @@
 from enum import IntEnum
-
 from numpy import ndarray
 
 # You can get the enumeration based on integer value, or make comparison

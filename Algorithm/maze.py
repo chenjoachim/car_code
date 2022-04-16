@@ -190,13 +190,14 @@ class Maze:
 if __name__ == '__main__':
 
     # medium_maze.csv is in the file
-    test_maze = Maze('medium_maze.csv')  
+    # test_maze = Maze('medium_maze.csv')  
+    test_maze = Maze('Test1.csv')
 
-    print(test_maze.BFS_two_points(9, 7))
-    print(test_maze.getAction(Direction.NORTH, 10, 11))
+    # print(test_maze.BFS_two_points(9, 7))
+    # print(test_maze.getAction(Direction.NORTH, 10, 11))
 
     # it is a list consisting of all points we need to pass by
-    path = test_maze.BFS_two_points(9, 7)
+    path = test_maze.BFS_two_points(1, 50)
     print("path", path)
 
     # initialize as NORTH
