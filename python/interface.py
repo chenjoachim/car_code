@@ -2,6 +2,7 @@ import BT
 import sys
 import maze
 import score
+import time
 
 # hint: You may design additional functions to execute the input command, which will be helpful when debugging :)
 
@@ -19,8 +20,11 @@ class interface:
             port = input("PC bluetooth port name: ")
         input("Press enter to start.")
         try:
-            self.ser.SerialWrite('start\n')
-            print("Start send succesfully")
+            self.ser.SerialWrite("L")
+            print("L send!")
+            time.sleep(5)
+            self.ser.SerialWrite("start")
+            print("start send!")
         except:
             print("writing fail!")
             sys.exit(1)
@@ -46,5 +50,5 @@ class interface:
         return
 
     def end_process(self):
-        self.ser.SerialWrite('stop\n')
+        self.ser.SerialWrite('stop')
         self.ser.disconnect()

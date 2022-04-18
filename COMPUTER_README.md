@@ -10,4 +10,6 @@ Some important notice:
 2. send the RFID in HEX
 3. the computer will send following codes: `"start", "stop", "R", "L"`
 
+update on OPENLAB 20220416:
+- 09:56 AM RFID individual test success
 > Second update: 
