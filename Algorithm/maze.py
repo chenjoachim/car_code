@@ -1,4 +1,7 @@
+from audioop import reverse
 from cgi import test
+from lib2to3.refactor import get_all_fix_names
+from pickle import TRUE
 from re import A, L
 from node import *
 import numpy as np
@@ -70,22 +73,46 @@ class Maze:
         # Tips : return a sequence of nodes of the shortest path
 
         # define the constant (parameters needed to be tested and revised)
-        STRAIGHT = 1.0   # the time taken to go straight line per length unit
-        TURN = 0.6       # the time taken to turn left or turn right per time
+        STRAIGHT = 0.5   # the time taken to go straight line per length unit
+        TURN = 0.3       # the time taken to turn left or turn right per time
 
+        # dist[i] = a dict {the adj_node : the shortest distance from nd_from passing the adj_node to i}
+        # record the shortest distance between the path from nd_from to any point from each of its adjacent point
         INFTY = 1e5
-        dist = [INFTY for i in range(0, self.num + 1)]    # record the shortest distance between the path from nd_from to any point
-        last_point = [0 for i in range(0, self.num + 1)]  # record the last point (index) in the BFS (record the path) 
-        last_dir = [0 for i in range(0, self.num + 1)]    # record the direction from the last point to the present point
-        # self.num + 1 for the better indexing (from 1 to self.num)
-        # note that if we know in the shortest path from a to b the last point before b is c (a -----> c -> b)
-        # then the shortest path from a to b is the shortest path from a to c and go through the path between b and c
+        dist = {}
+        dir = {}
+        for i in range(1, self.num + 1):
+            _dist = {}
+            _dir = {}
+            for neighbor in self.nd_dict[i].getSuccessors():
+                # We split all nodes into at most four subnodes to represent the path coming from every direction
+                # for example, [3][Direction.NORTH] represents "The north part of the node 3"
+                # only the north of the node 3 can have a path to enter [3][Direction.NORTH]
+                # assume the west of the node 3 is node 4, there is a path from [3][Direction.NORTH] to [4][Direction.EAST]
+                #        4.NORTH                   3.NORTH
+                # 4.WEST         4.EAST     3.WEST         3.EAST
+                #        4.SOUTH                   3.SOUTH
+                _dist[neighbor[Node.ADJ_DIR]] = INFTY      
+                _dir[neighbor[Node.ADJ_DIR]] = [0, 0]   # [Adjacent node][Adjacent node.direction]
+            dist[i] = _dist
+            dir[i] = _dir
 
         # Begin to BFS, q_bfs means the queue for BFS
-        # q_bfs storing three-termed tuple, (current_point, the direction of the last point to this point)
+        # q_bfs storing the index
         q_bfs = queue.Queue()      
-        q_bfs.put(nd_from)  
-        dist[nd_from] = 0       # initialize
+
+        reverse_dir = {Direction.NORTH : Direction.SOUTH, Direction.SOUTH : Direction.NORTH,\
+                        Direction.EAST : Direction.WEST, Direction.WEST : Direction.EAST}
+
+        # initialize and deal with the starting point case
+        for neighbor in self.nd_dict[nd_from].getSuccessors():
+            dist[nd_from][neighbor[Node.ADJ_DIR]] = 0  # neighbor[Node.ADJ_DIR] means the neighbor's direction
+
+            adj_idx = neighbor[Node.ADJ_INDEX]                              # return the neighbor's index
+            from_dir = reverse_dir[neighbor[Node.ADJ_DIR]]                  # the coming direction of adj_idx from nd_from
+            dist[adj_idx][from_dir] = neighbor[Node.ADJ_DIST] * STRAIGHT
+            dir[adj_idx][from_dir] = 0                                      # no need to specify
+            q_bfs.put(adj_idx)    # put all adjacent point into the queue
 
         while True:
             if q_bfs.empty(): 
@@ -93,19 +120,17 @@ class Maze:
                 break
              
             curr_idx = q_bfs.get()               # return the current node index
-            curr_dir = last_dir[curr_idx]        # return the direction from the last node
             curr_node = self.nd_dict[curr_idx]   # return the current node object (type: Node)
 
             '''
             print("curr_idx", curr_idx)
-            print("curr_dir", curr_dir)
             print("curr_node", curr_node)
             '''
 
-            for neighbor in curr_node.getSuccessors():   # getSuccessors (0: successors, 1: direction, 2: length)
-                adj_idx = int(neighbor[0])
-                adj_dir = neighbor[1]
-                adj_len = neighbor[2]
+            for neighbor in curr_node.getSuccessors():
+                adj_idx = int(neighbor[Node.ADJ_INDEX])
+                adj_dir = neighbor[Node.ADJ_DIR]
+                adj_len = neighbor[Node.ADJ_DIST]
 
                 '''
                 print("adj_idx", adj_idx)
@@ -113,39 +138,66 @@ class Maze:
                 print("adj_len", adj_len)
                 '''
 
-                total_dist = dist[curr_idx] + STRAIGHT * adj_len
-                if curr_dir != adj_dir and curr_dir != 0:  # curr_dir = 0 means that it is at the starting point
-                    total_dist += TURN
-                
-                '''
-                print("total_dist", total_dist)
-                '''
+                curr_dir = curr_node.getDirection(adj_idx) # the directoin from curr_idx -> adj_idx
+                put_into_queue = False
 
-                if total_dist < dist[adj_idx]:       # never put equal sign here to prevent infinite loop
-                    dist[adj_idx] = total_dist
-                    last_point[adj_idx] = curr_idx
-                    last_dir[adj_idx] = adj_dir
-                    q_bfs.put(adj_idx)    # put a tuple inside 
-            
+                for _neighbor in curr_node.getSuccessors():
+                    last_dir = _neighbor[Node.ADJ_DIR]    # the coming direction (_neighbor 3 ---> curr_idx 4) it is Direction.WEST 
+                    last_from_dir = reverse_dir[last_dir] # the path direction (_neighbor 3 ---> curr_idx 4) it is Direction.EAST
+                    tmp_dist = dist[curr_idx][last_dir] + STRAIGHT * adj_len
+                    # consider the turning cost
+                    if curr_dir != last_from_dir and curr_idx != nd_from: # actually curr_idx != nd_from can be deleted
+                        tmp_dist += TURN
+
+                    # (_neighbor 3 ---> curr_idx 4 ---> adj_idx 5), for 5 we focus dist[5][Direction.WEST]
+                    curr_from_dir = reverse_dir[curr_dir]
+                    if tmp_dist < dist[adj_idx][curr_from_dir]: # never put equal sign here to prevent infinite loop
+                        put_into_queue = True
+                        dist[adj_idx][curr_from_dir] = tmp_dist
+                        dir[adj_idx][curr_from_dir] = [curr_idx, last_dir]
+
+
+                if put_into_queue:
+                    q_bfs.put(adj_idx)
+
             if (q_bfs.empty()):
                 break
-            
+        
         '''
-        print("print all the distance from the point nd_from")
-        for i in range(1, 13):
-            print(i, dist[i])
+        for i in range(1, self.num + 1):
+            for neighbor_dir in dist[i].keys():
+                print(i, neighbor_dir, dist[i][neighbor_dir])
         '''
 
-        print("The distance between nd_from to nd_to is ", dist[nd_to])
+        route = [nd_to]
+        passing_node = self.nd_dict[nd_to] # it is a Node object
 
-        route = []
-        passing_node = nd_to
-        while (passing_node != 0):   # last_point[nd_from] == 0
-            route.append(passing_node)
-            passing_node = last_point[passing_node]
+        # for the endpoint, we find which direction has the shortest path
+        shortest = INFTY
+        last_point = 0
+        last_dir = 0
+        for neighbor in passing_node.getSuccessors():
+            if dist[nd_to][neighbor[Node.ADJ_DIR]] < shortest:
+                last_point = neighbor[Node.ADJ_INDEX]
+                last_dir = dir[nd_to][neighbor[Node.ADJ_DIR]][1]
+
+        print(last_point, last_dir)
+
+        while True:   
+            route.append(int(last_point))
+            tmp_point = self.nd_dict[last_point].getSuccessorWithDirection(last_dir)
+            print(last_point, last_dir, tmp_point)
+            if tmp_point == nd_from:        # this line to prevent CE
+                route.append(nd_from)
+                break
+            last_dir = dir[last_point][last_dir][1]
+            last_point = tmp_point
+
         route.reverse()
+        # print(route)
 
         return route
+    
 
     def getAction(self, car_dir, nd_from, nd_to):
         # TODO : get the car action
@@ -186,30 +238,35 @@ class Maze:
     def strategy_2(self, nd_from, nd_to):
         return self.BFS_2(nd_from, nd_to)
 
+    # function for tests
+    # will print the path of all passing nodes
+    # will also print the action the car made 
+    
+    def maze_test(self, init_dir, nd_to, nd_from):
+        
+        path = self.BFS_two_points(nd_to, nd_from)
+        print("path:", path)
+
+        now_dir = init_dir
+
+        action_dict = {Action.ADVANCE : "f", Action.U_TURN : "b", Action.TURN_LEFT : "l", Action.TURN_RIGHT : "r"}
+        action = []
+        for i in range (0, len(path) - 1):
+            _act = self.getAction(now_dir, path[i], path[i + 1])
+            now_dir = self.get_two_point_Diection(path[i], path[i + 1]) 
+            action.append(action_dict[_act])
+    
+        print(action)
+        pass
+
 # for test
 if __name__ == '__main__':
 
     # medium_maze.csv is in the file
-    # test_maze = Maze('medium_maze.csv')  
-    test_maze = Maze('Test1.csv')
+    _maze = Maze('medium_maze.csv')  
+    # _maze = Maze('Test1.csv')
 
-    # print(test_maze.BFS_two_points(9, 7))
-    # print(test_maze.getAction(Direction.NORTH, 10, 11))
-
-    # it is a list consisting of all points we need to pass by
-    path = test_maze.BFS_two_points(1, 50)
-    print("path", path)
-
-    # initialize as NORTH
-    now_dir = Direction.NORTH
-
-    # get an action list
-    action = []
-    for i in range (0, len(path) - 1):
-        _act = test_maze.getAction(now_dir, path[i], path[i + 1])
-        now_dir = test_maze.get_two_point_Diection(path[i], path[i + 1])
-        action.append(_act)
-    
-    print(action)
-    
-   
+    #_maze.BFS_two_points(9, 7)
+    # print(_maze.getAction(Direction.NORTH, 10, 11))
+    _maze.maze_test(Direction.NORTH, 1, 7)
+    #_maze.maze_test(Direction.WEST, 1, 50)
