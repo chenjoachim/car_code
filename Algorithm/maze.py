@@ -63,10 +63,6 @@ class Maze:
     def getNodeDict(self):
         return self.nd_dict
 
-    def BFS(self, nd):
-        # TODO : design your data structure here for your algorithm
-        # Tips : return a sequence of nodes from the node to the nearest unexplored deadend
-        return None
 
     def BFS_two_points(self, nd_from, nd_to):
         # TODO : similar to BFS but with fixed start point and end point
@@ -180,13 +176,14 @@ class Maze:
             if dist[nd_to][neighbor[Node.ADJ_DIR]] < shortest:
                 last_point = neighbor[Node.ADJ_INDEX]
                 last_dir = dir[nd_to][neighbor[Node.ADJ_DIR]][1]
+                shortest = dist[nd_to][neighbor[Node.ADJ_DIR]]  # this line avoid being ignored
 
-        print(last_point, last_dir)
+        # print(last_point, last_dir)
 
         while True:   
             route.append(int(last_point))
             tmp_point = self.nd_dict[last_point].getSuccessorWithDirection(last_dir)
-            print(last_point, last_dir, tmp_point)
+            # print(last_point, last_dir, tmp_point)
             if tmp_point == nd_from:        # this line to prevent CE
                 route.append(nd_from)
                 break
@@ -198,6 +195,10 @@ class Maze:
 
         return route
     
+    def BFS(self, nd):
+        # TODO : design your data structure here for your algorithm
+        # Tips : return a sequence of nodes from the node to the nearest unexplored deadend
+        return None
 
     def getAction(self, car_dir, nd_from, nd_to):
         # TODO : get the car action
@@ -241,7 +242,6 @@ class Maze:
     # function for tests
     # will print the path of all passing nodes
     # will also print the action the car made 
-    
     def maze_test(self, init_dir, nd_to, nd_from):
         
         path = self.BFS_two_points(nd_to, nd_from)
@@ -251,22 +251,29 @@ class Maze:
 
         action_dict = {Action.ADVANCE : "f", Action.U_TURN : "b", Action.TURN_LEFT : "l", Action.TURN_RIGHT : "r"}
         action = []
+        answer_string = '' # for website testing
         for i in range (0, len(path) - 1):
             _act = self.getAction(now_dir, path[i], path[i + 1])
             now_dir = self.get_two_point_Diection(path[i], path[i + 1]) 
             action.append(action_dict[_act])
+            answer_string += action_dict[_act] 
     
         print(action)
+        print(answer_string)
         pass
 
 # for test
 if __name__ == '__main__':
 
     # medium_maze.csv is in the file
-    _maze = Maze('medium_maze.csv')  
-    # _maze = Maze('Test1.csv')
+    #_maze = Maze('medium_maze.csv')  
+    #_maze = Maze('Test1.csv')
+    #_maze = Maze('Test2.csv')
+    _maze = Maze('Self_test1.csv')
 
     #_maze.BFS_two_points(9, 7)
     # print(_maze.getAction(Direction.NORTH, 10, 11))
-    _maze.maze_test(Direction.NORTH, 1, 7)
-    #_maze.maze_test(Direction.WEST, 1, 50)
+    #_maze.maze_test(Direction.NORTH, 1, 7)
+    #_maze.maze_test(Direction.WEST, 1, 53)
+    #_maze.maze_test(Direction.WEST, 1, 52)
+    _maze.maze_test(Direction.WEST, 1, 6)
