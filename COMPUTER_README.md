@@ -12,4 +12,8 @@ Some important notice:
 
 update on OPENLAB 20220416:
 - 09:56 AM RFID individual test success
-> Second update: 
+
+update on 20220419
+To compile the code, use following command in your terminal:
+1. (using local point system) python main.py 1 1
+2. (using remote point system) python main.py 1 2
