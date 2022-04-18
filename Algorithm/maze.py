@@ -64,7 +64,9 @@ class Maze:
         return self.nd_dict
 
 
-    def BFS_two_points(self, nd_from, nd_to):
+    def BFS_two_points(self, nd_from, nd_to = 1, mode = 1): 
+        # mode 1 : find the shortest path from nd_from to nd_to
+        # mode 2 : find the shortest distance from nd_from to all points
         # TODO : similar to BFS but with fixed start point and end point
         # Tips : return a sequence of nodes of the shortest path
 
@@ -133,8 +135,7 @@ class Maze:
                 print("adj_dir", adj_dir)
                 print("adj_len", adj_len)
                 '''
-
-                curr_dir = curr_node.getDirection(adj_idx) # the directoin from curr_idx -> adj_idx
+                
                 put_into_queue = False
 
                 for _neighbor in curr_node.getSuccessors():
@@ -142,11 +143,11 @@ class Maze:
                     last_from_dir = reverse_dir[last_dir] # the path direction (_neighbor 3 ---> curr_idx 4) it is Direction.EAST
                     tmp_dist = dist[curr_idx][last_dir] + STRAIGHT * adj_len
                     # consider the turning cost
-                    if curr_dir != last_from_dir and curr_idx != nd_from: # actually curr_idx != nd_from can be deleted
+                    if adj_dir != last_from_dir and curr_idx != nd_from: # actually curr_idx != nd_from can be deleted
                         tmp_dist += TURN
 
                     # (_neighbor 3 ---> curr_idx 4 ---> adj_idx 5), for 5 we focus dist[5][Direction.WEST]
-                    curr_from_dir = reverse_dir[curr_dir]
+                    curr_from_dir = reverse_dir[adj_dir]
                     if tmp_dist < dist[adj_idx][curr_from_dir]: # never put equal sign here to prevent infinite loop
                         put_into_queue = True
                         dist[adj_idx][curr_from_dir] = tmp_dist
@@ -165,35 +166,49 @@ class Maze:
                 print(i, neighbor_dir, dist[i][neighbor_dir])
         '''
 
-        route = [nd_to]
-        passing_node = self.nd_dict[nd_to] # it is a Node object
+        if mode == 1:  # mode 1 : find the shortest path from nd_from to nd_to
+            route = [nd_to]
+            passing_node = self.nd_dict[nd_to] # it is a Node object
 
-        # for the endpoint, we find which direction has the shortest path
-        shortest = INFTY
-        last_point = 0
-        last_dir = 0
-        for neighbor in passing_node.getSuccessors():
-            if dist[nd_to][neighbor[Node.ADJ_DIR]] < shortest:
-                last_point = neighbor[Node.ADJ_INDEX]
-                last_dir = dir[nd_to][neighbor[Node.ADJ_DIR]][1]
-                shortest = dist[nd_to][neighbor[Node.ADJ_DIR]]  # this line avoid being ignored
+            # for the endpoint, we find which direction has the shortest path
+            shortest = INFTY
+            last_point = 0
+            last_dir = 0
+            for neighbor in passing_node.getSuccessors():
+                if dist[nd_to][neighbor[Node.ADJ_DIR]] < shortest:
+                    last_point = neighbor[Node.ADJ_INDEX]
+                    last_dir = dir[nd_to][neighbor[Node.ADJ_DIR]][1]
+                    shortest = dist[nd_to][neighbor[Node.ADJ_DIR]]  # this line avoid being ignored
 
-        # print(last_point, last_dir)
+            # print(last_point, last_dir)
 
-        while True:   
-            route.append(int(last_point))
-            tmp_point = self.nd_dict[last_point].getSuccessorWithDirection(last_dir)
-            # print(last_point, last_dir, tmp_point)
-            if tmp_point == nd_from:        # this line to prevent CE
-                route.append(nd_from)
-                break
-            last_dir = dir[last_point][last_dir][1]
-            last_point = tmp_point
+            while True:   
+                route.append(int(last_point))
+                tmp_point = self.nd_dict[last_point].getSuccessorWithDirection(last_dir)
+                # print(last_point, last_dir, tmp_point)
+                if tmp_point == nd_from:        # this line to prevent CE
+                    route.append(nd_from)
+                    break
+                last_dir = dir[last_point][last_dir][1]
+                last_point = tmp_point
 
-        route.reverse()
-        # print(route)
+            route.reverse()
+            # print(route)
+            return route
 
-        return route
+        elif mode == 2:  # mode 2 : find the shortest distance from nd_from to all points
+            shortest_dist = {}
+            for i in range(1, self.num + 1):
+                _short = INFTY
+                for _dir in dist[i].keys():
+                    _short = min(dist[i][_dir], _short)
+                shortest_dist[i] = _short
+                        
+            return shortest_dist
+        
+        else :
+            print("ModeError")
+            return None
     
     def BFS(self, nd):
         # TODO : design your data structure here for your algorithm
@@ -267,13 +282,13 @@ if __name__ == '__main__':
 
     # medium_maze.csv is in the file
     #_maze = Maze('medium_maze.csv')  
-    #_maze = Maze('Test1.csv')
+    _maze = Maze('Test1.csv')
     #_maze = Maze('Test2.csv')
-    _maze = Maze('Self_test1.csv')
+    #_maze = Maze('Self_test1.csv')
 
-    #_maze.BFS_two_points(9, 7)
+    print(_maze.BFS_two_points(1, 53, mode = 2))
     # print(_maze.getAction(Direction.NORTH, 10, 11))
-    #_maze.maze_test(Direction.NORTH, 1, 7)
+    #_maze.maze_test(Direction.EAST, 9, 7)
     #_maze.maze_test(Direction.WEST, 1, 53)
     #_maze.maze_test(Direction.WEST, 1, 52)
-    _maze.maze_test(Direction.WEST, 1, 6)
+    #_maze.maze_test(Direction.WEST, 1, 6)
