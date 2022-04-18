@@ -32,6 +32,17 @@ class Maze:
         # Add nodes to the list "self.nodes"
         self.nodes = []
 
+        # A dictionary with the key be the index of the node and the value be the corresponding "Node" object
+        # For example, self.nd_dict[1] represents the node of index 1
+        self.nd_dict = dict()
+
+        # Collect all the deadend, set its score and the distance from one endpoint to other endpoints
+        self.DeadEnds = []
+        self.DeadEndsValue = {}
+        self.DeadEndDist = {}
+
+        #--------------------------------------------------------------------------------
+        # read all files
         direction = {'North':['ND', Direction.NORTH], 'South':['SD', Direction.SOUTH],\
                     'West':['WD', Direction.WEST], 'East':['ED', Direction.EAST]}
         
@@ -46,10 +57,11 @@ class Maze:
                     _node.setSuccessor(_succ, direction[dir][1], _dist)   # set successor (dir_enum[dir] is a Direction object)
     
             self.nodes.append(_node)
+
+            if _node.successor_num == 1:
+                self.DeadEnds.append(_index)
         
-        # A dictionary with the key be the index of the node and the value be the corresponding "Node" object
-        # For example, self.nd_dict[1] represents the node of index 1
-        self.nd_dict = dict()
+        # self.nd_dict part
         for _node in self.nodes:
             self.nd_dict[_node.getIndex()] = _node 
 
@@ -59,12 +71,19 @@ class Maze:
             print("Error: the start point is not included.")
             return 0
         return self.nd_dict[1]
+    
+    def getStartDirection(self):
+        start = self.getStartPoint()
+        if start != 0:
+            return start.getSuccessors()[0][Node.ADJ_DIR]
 
     def getNodeDict(self):
         return self.nd_dict
 
-
     def BFS_two_points(self, nd_from, nd_to = 1, mode = 1): 
+        if (nd_from == nd_to):
+            print("NoNeedToBFSError")
+            return 0
         # mode 1 : find the shortest path from nd_from to nd_to
         # mode 2 : find the shortest distance from nd_from to all points
         # TODO : similar to BFS but with fixed start point and end point
@@ -109,7 +128,7 @@ class Maze:
             adj_idx = neighbor[Node.ADJ_INDEX]                              # return the neighbor's index
             from_dir = reverse_dir[neighbor[Node.ADJ_DIR]]                  # the coming direction of adj_idx from nd_from
             dist[adj_idx][from_dir] = neighbor[Node.ADJ_DIST] * STRAIGHT
-            dir[adj_idx][from_dir] = 0                                      # no need to specify
+            dir[adj_idx][from_dir] = 0                                      # no need to specify, so the special case to deal with, see Line 192/193
             q_bfs.put(adj_idx)    # put all adjacent point into the queue
 
         while True:
@@ -177,12 +196,15 @@ class Maze:
             for neighbor in passing_node.getSuccessors():
                 if dist[nd_to][neighbor[Node.ADJ_DIR]] < shortest:
                     last_point = neighbor[Node.ADJ_INDEX]
+                    if last_point == nd_from:       # special case see the BFS_two_point initialization
+                        route.append(nd_from)
+                        break
                     last_dir = dir[nd_to][neighbor[Node.ADJ_DIR]][1]
                     shortest = dist[nd_to][neighbor[Node.ADJ_DIR]]  # this line avoid being ignored
 
             # print(last_point, last_dir)
 
-            while True:   
+            while last_point != nd_from:   
                 route.append(int(last_point))
                 tmp_point = self.nd_dict[last_point].getSuccessorWithDirection(last_dir)
                 # print(last_point, last_dir, tmp_point)
@@ -253,13 +275,64 @@ class Maze:
 
     def strategy_2(self, nd_from, nd_to):
         return self.BFS_2(nd_from, nd_to)
+    
+    def getDeadEnds(self):
+        return self.DeadEnds
+    
+    # you need to run BFS_two_points function when using this, so try to use this function at most one time
+    def getScore(self, endpoint):
+        path = self.BFS_two_points(self.getStartPoint().getIndex(), endpoint)
+        north_south_dist = 0
+        west_east_dist = 0
+        for i in range (0, len(path) - 1):
+            now_dir = self.get_two_point_Diection(path[i], path[i + 1]) 
+            now_dist = self.nd_dict[path[i]].getDistance(path[i + 1])
+            
+            if now_dir == Direction.NORTH:
+                north_south_dist += now_dist
+            elif now_dir == Direction.SOUTH:
+                north_south_dist -= now_dist
+            elif now_dir == Direction.WEST:
+                west_east_dist -= now_dist
+            elif now_dir == Direction.EAST:
+                west_east_dist += now_dist
+            else :
+                print("GetScore_DirectionError")
+
+        return abs(north_south_dist) + abs(west_east_dist)
+
+    def setAllScore(self):
+        if self.DeadEndsValue == {}:  # is empty, saving time
+            start = self.getStartPoint().getIndex()
+            for deadend in self.DeadEnds:
+                if deadend != start:
+                    self.DeadEndsValue[deadend] = self.getScore(deadend)
+                else:
+                    self.DeadEndsValue[deadend] = 0
+
+        return self.DeadEndsValue 
+
+    def setDeadEndsDistance(self):
+        if self.DeadEndDist == {}: # if empty
+            for dead in self.DeadEnds:
+                _dist_dict = {}
+                # return the shortest distance from "dead" to all points
+                # note that if dead == 1 then nd_to must not be 1 (NoNeedToBFSError) so we let it be 2
+                all_dist = self.BFS_two_points(dead, nd_to = 1 if dead != 1 else 2, mode = 2) 
+                print(all_dist)
+                for another_dead in self.DeadEnds:
+                    if another_dead != dead:
+                        _dist_dict[another_dead] = all_dist[another_dead]
+                self.DeadEndDist[dead] = _dist_dict
+        
+        return self.DeadEndDist
 
     # function for tests
     # will print the path of all passing nodes
     # will also print the action the car made 
-    def maze_test(self, init_dir, nd_to, nd_from):
+    def maze_test(self, init_dir, nd_from, nd_to):
         
-        path = self.BFS_two_points(nd_to, nd_from)
+        path = self.BFS_two_points(nd_from, nd_to)
         print("path:", path)
 
         now_dir = init_dir
@@ -281,14 +354,22 @@ class Maze:
 if __name__ == '__main__':
 
     # medium_maze.csv is in the file
-    #_maze = Maze('medium_maze.csv')  
-    _maze = Maze('Test1.csv')
+    _maze = Maze('medium_maze.csv')  
+    #_maze = Maze('Test1.csv')
     #_maze = Maze('Test2.csv')
     #_maze = Maze('Self_test1.csv')
 
-    print(_maze.BFS_two_points(1, 53, mode = 2))
+    print(_maze.getStartDirection())
+
+    # print(_maze.BFS_two_points(1, 53, mode = 2))
+    print(_maze.getDeadEnds())
     # print(_maze.getAction(Direction.NORTH, 10, 11))
     #_maze.maze_test(Direction.EAST, 9, 7)
     #_maze.maze_test(Direction.WEST, 1, 53)
     #_maze.maze_test(Direction.WEST, 1, 52)
     #_maze.maze_test(Direction.WEST, 1, 6)
+
+    print(_maze.setAllScore())
+    # print(_maze.maze_test(Direction.NORTH, 1, 2))
+
+    print(_maze.setDeadEndsDistance())

@@ -52,9 +52,16 @@ class Node:
             if succ[Node.ADJ_DIR] == direction:
                 return succ[Node.ADJ_INDEX]
 
+    def getDistance(self, nd):
+        for succ in self.Successors:
+            if succ[Node.ADJ_INDEX] == nd:
+                return succ[Node.ADJ_DIST]
+        print("AdjacentDistanceError")
+        return 0
+
     def isSuccessor(self, nd):
         for succ in self.Successors:
-            if succ[Node.ADJ_NODE] == nd: 
+            if succ[Node.ADJ_INDEX] == nd: 
                 return True
         return False
 
