@@ -13,12 +13,13 @@ import os
 
 def main():
     maze = mz.Maze("data/small_maze.csv")
-    local_point = score.Scoreboard("data/UID.csv", "team_NTUEE")
-    remote_point = remote.Scoreboard("fakepath", "tunococ")
     interf = interface.interface()
     # TODO : Initialize necessary variables
     Node_position = 0
 
+
+    if (sys.argv[2] == '1'):    point = score.Scoreboard("data/UID.csv", "team_NTUEE")
+    elif (sys.argv[2] == '2'):  point = remote.Scoreboard("fakepath", "tunococ")
     if (sys.argv[1] == '0'):
         print("Mode 0: for treasure-hunting")
         # TODO : for treasure-hunting, which encourages you to hunt as many scores as possible
@@ -38,8 +39,7 @@ def main():
                 if (Node_position == 3):
                     interf.send_action("R")
             else:                   
-                if (sys.argv[2] == '1'):    local_point.add_UID(rv)
-                elif (sys.argv[2] == '2'):  remote_point.add_UID(rv)
+                point.add_UID(rv)
         
         interf.end_process()
 
