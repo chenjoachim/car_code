@@ -54,6 +54,7 @@ class Node:
         for succ in self.Successors:
             if succ[Node.ADJ_DIR] == direction:
                 return succ[Node.ADJ_INDEX]
+        print("EmptyDirectionError")
 
     def getDistance(self, nd):
         for succ in self.Successors:

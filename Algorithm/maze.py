@@ -76,7 +76,7 @@ class Maze:
     def getStartDirection(self):
         start = self.getStartPoint()
         if start != 0:
-            return start.getSuccessors()[0][Node.ADJ_DIR]
+            return start.AnyValidDirection()
 
     def getNodeDict(self):
         return self.nd_dict
