@@ -10,6 +10,7 @@ import pandas
 from enum import IntEnum
 import math
 import queue
+import time
 
 class Action(IntEnum):
     ADVANCE = 1
@@ -65,7 +66,7 @@ class Maze:
         for _node in self.nodes:
             self.nd_dict[_node.getIndex()] = _node 
 
-    # return the node of index 1 (starting point)
+    # return the node of index 1 (starting point), returning Node object
     def getStartPoint(self):
         if (len(self.nd_dict) < 2):
             print("Error: the start point is not included.")
@@ -231,11 +232,42 @@ class Maze:
         else :
             print("ModeError")
             return None
-    
-    def BFS(self, nd):
-        # TODO : design your data structure here for your algorithm
-        # Tips : return a sequence of nodes from the node to the nearest unexplored deadend
-        return None
+
+    # run all the map
+    def Run(self):
+        if self.DeadEnds[0] != self.getStartPoint().getIndex():
+            print ("StartingPointError")
+            return 0
+
+        shortest_path = []
+        INFTY = 1e5
+        shortest_dist = INFTY
+
+        self.setDeadEndsDistance()
+
+        def permutation(now, end, total_dist, _path):
+            nonlocal shortest_path
+            nonlocal shortest_dist
+            if now == end:
+                if total_dist < shortest_dist:
+                    shortest_dist = total_dist
+                    shortest_path = _path[:]   # THIS LINE deep copy!!!
+                pass
+            else:
+                for i in range(now, end):
+                    _path[now], _path[i] = _path[i], _path[now]  # swap the position
+                    if now != 0:
+                        total_dist += self.DeadEndDist[_path[now - 1]][_path[now]]
+                    if total_dist <= shortest_dist: # cut for better efficiency
+                        permutation(now + 1, end, total_dist, _path)
+                    if now != 0:
+                        total_dist -= self.DeadEndDist[_path[now - 1]][_path[now]]
+                    _path[now], _path[i] = _path[i], _path[now]  # swap back to the original position
+                pass
+
+        permutation(1, len(self.DeadEnds), 0, self.DeadEnds)
+
+        return [shortest_path, shortest_dist]
 
     def getAction(self, car_dir, nd_from, nd_to):
         # TODO : get the car action
@@ -270,11 +302,13 @@ class Maze:
     def get_two_point_Diection(self, nd_from, nd_to):
         return self.nd_dict[nd_from].getDirection(nd_to)
 
+    '''
     def strategy(self, nd):
         return self.BFS(nd)
 
     def strategy_2(self, nd_from, nd_to):
         return self.BFS_2(nd_from, nd_to)
+    '''
     
     def getDeadEnds(self):
         return self.DeadEnds
@@ -319,7 +353,6 @@ class Maze:
                 # return the shortest distance from "dead" to all points
                 # note that if dead == 1 then nd_to must not be 1 (NoNeedToBFSError) so we let it be 2
                 all_dist = self.BFS_two_points(dead, nd_to = 1 if dead != 1 else 2, mode = 2) 
-                print(all_dist)
                 for another_dead in self.DeadEnds:
                     if another_dead != dead:
                         _dist_dict[another_dead] = all_dist[another_dead]
@@ -349,27 +382,71 @@ class Maze:
         print(action)
         print(answer_string)
         pass
+    
+    # almost the same as maze_test, will be used in all_maze_test
+    def action_two_points(self, init_dir, nd_from, nd_to, *, first_step_is_back = False):
+        path = self.BFS_two_points(nd_from, nd_to)
+        now_dir = init_dir
+
+        action_dict = {Action.ADVANCE : "f", Action.U_TURN : "b", Action.TURN_LEFT : "l", Action.TURN_RIGHT : "r"}
+        answer_string = '' # for website testing
+        for i in range (0, len(path) - 1):
+            if first_step_is_back and i == 0:
+                answer_string += 'b'
+            else:
+                _act = self.getAction(now_dir, path[i], path[i + 1])
+                now_dir = self.get_two_point_Diection(path[i], path[i + 1]) 
+                answer_string += action_dict[_act] 
+
+        return answer_string
+
+    def all_maze_test(self):
+        run_result = self.Run()
+        total_path = run_result[0]
+        # define the reverse time for the car per time
+        REV = 0.8
+        total_cost = run_result[1] + REV * (len(total_path) - 2)
+        total_action = ''
+        now_direction = self.getStartDirection()
+        
+        for i in range(0, len(total_path) - 1):
+            _two_points_ans_string = self.action_two_points(now_direction, total_path[i], total_path[i + 1],\
+                                                            first_step_is_back = True if i != 0 else 0)
+            now_direction = self.nd_dict[total_path[i + 1]].AnyValidDirection()
+
+            total_action += _two_points_ans_string     
+
+        print("Deadend order", total_path)
+        print("Total time cost", total_cost)
+        print("Total_action", total_action)
+        return total_action
 
 # for test
 if __name__ == '__main__':
 
+    begin = time.time()
     # medium_maze.csv is in the file
-    _maze = Maze('medium_maze.csv')  
-    #_maze = Maze('Test1.csv')
+    #_maze = Maze('medium_maze.csv')  
+    _maze = Maze('Test1.csv')
     #_maze = Maze('Test2.csv')
     #_maze = Maze('Self_test1.csv')
 
-    print(_maze.getStartDirection())
+    # print(_maze.getStartDirection())
 
     # print(_maze.BFS_two_points(1, 53, mode = 2))
-    print(_maze.getDeadEnds())
+    # print(_maze.getDeadEnds())
     # print(_maze.getAction(Direction.NORTH, 10, 11))
     #_maze.maze_test(Direction.EAST, 9, 7)
     #_maze.maze_test(Direction.WEST, 1, 53)
     #_maze.maze_test(Direction.WEST, 1, 52)
     #_maze.maze_test(Direction.WEST, 1, 6)
 
-    print(_maze.setAllScore())
+    # print(_maze.setAllScore())
     # print(_maze.maze_test(Direction.NORTH, 1, 2))
 
-    print(_maze.setDeadEndsDistance())
+    #print(_maze.setDeadEndsDistance())
+
+    print(_maze.all_maze_test())
+    end = time.time()
+
+    print(end - begin)

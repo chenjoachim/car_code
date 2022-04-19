@@ -36,6 +36,9 @@ class Node:
         print("For Node {}, a successor {} is set.".format(self.index, self.Successors[-1]))
         return
 
+    def AnyValidDirection(self):
+        return self.Successors[0][Node.ADJ_DIR]
+
     def getDirection(self, nd):
         # TODO : if nd is adjacent to the present node, return the direction of nd from the present node
         # For example, if the direction of nd from the present node is EAST, then return Direction.EAST = 4
