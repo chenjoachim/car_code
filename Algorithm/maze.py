@@ -31,6 +31,18 @@ class Maze:
         REVERSE : the time to reverse per time (default : 0.8)
         starting_point : starting point index (default : 1)
         time_constraint : time constraint on the map (default : INFTY)
+    
+    If we want to test the correctness of the program, we can use the following method:
+    all_maze_test(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
+        If you only need to get the answer, you just use .all_maze_test() to get the answer.
+        If you need to check what the problem is, there are five modes to check our tests:
+            print_order : print the order of the passing deadends
+            print_time_cost : print the total time cost (with time constraint but still go through all the deadends)
+            print_action : print the all action the car should made (type : string)
+            print_score : print the total score gotten
+            print_detail : print the detail information on the path (including the distance between the two points, ...)
+        
+    this function will return a string which represents the total action the car should made.
     '''
     def __init__(self, filepath, *, STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 1e5):
         # TODO : read file and implement a data structure you like
@@ -485,18 +497,18 @@ class Maze:
 # for test
 if __name__ == '__main__':
 
-    help(Maze)
+    # help(Maze)
 
     begin = time.time()
     # medium_maze.csv is in the file
-    _maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
-    #_maze = Maze('Test1.csv')
+    #_maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
+    _maze = Maze('Test1.csv')
     #_maze = Maze('Test2.csv')
     #_maze = Maze('Self_test1.csv')
 
     # print(_maze.maze_test(1, 52))
     # print(_maze.get_two_point_distance(1, 12))
-    print(_maze.all_maze_test())
+    print(_maze.all_maze_test(print_order = True, print_time_cost = True))
     
     end = time.time()
     print(end - begin)
