@@ -3,6 +3,7 @@ from cgi import test
 from lib2to3.refactor import get_all_fix_names
 from pickle import TRUE
 from re import A, L
+from tracemalloc import start
 from node import *
 import numpy as np
 import csv
@@ -21,7 +22,17 @@ class Action(IntEnum):
 
 
 class Maze:
-    def __init__(self, filepath):
+    '''
+    We can initialize a map as follow:
+    __init__(self, filepath, *, STRAIGHT, TURN, REVERSE, starting_point, time_constraint):
+        filepath : input a .csv map file
+        STRAIGHT : the time taken to go straight per distance unit (default : 0.5)
+        TURN : the time taken to turn left/right per time (default : 0.3)
+        REVERSE : the time to reverse per time (default : 0.8)
+        starting_point : starting point index (default : 1)
+        time_constraint : time constraint on the map (default : INFTY)
+    '''
+    def __init__(self, filepath, *, STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 1e5):
         # TODO : read file and implement a data structure you like
 		# For example, when parsing raw_data, you may create several Node objects.  
 		# Then you can store these objects into self.nodes.  
@@ -41,6 +52,13 @@ class Maze:
         self.DeadEnds = []
         self.DeadEndsValue = {}
         self.DeadEndDist = {}
+
+        self.start = starting_point
+        self.STRAIGHT = STRAIGHT
+        self.TURN = TURN
+        self.REVERSE = REVERSE
+
+        self.time_constraint = time_constraint
 
         #--------------------------------------------------------------------------------
         # read all files
@@ -66,12 +84,12 @@ class Maze:
         for _node in self.nodes:
             self.nd_dict[_node.getIndex()] = _node 
 
-    # return the node of index 1 (starting point), returning Node object
+    # return starting node (default : 1), it will return a Node object
     def getStartPoint(self):
         if (len(self.nd_dict) < 2):
             print("Error: the start point is not included.")
             return 0
-        return self.nd_dict[1]
+        return self.nd_dict[self.start]
     
     def getStartDirection(self):
         start = self.getStartPoint()
@@ -81,7 +99,14 @@ class Maze:
     def getNodeDict(self):
         return self.nd_dict
 
-    def BFS_two_points(self, nd_from, nd_to = 1, mode = 1): 
+    # the same as what we have implemented in the Node class
+    def get_two_point_Direction(self, nd_from, nd_to):
+        return self.nd_dict[nd_from].getDirection(nd_to)
+    
+    def getDeadEnds(self):
+        return self.DeadEnds
+
+    def __BFS_two_points(self, nd_from, nd_to = 0, mode = 1): 
         if (nd_from == nd_to):
             print("NoNeedToBFSError")
             return 0
@@ -91,8 +116,8 @@ class Maze:
         # Tips : return a sequence of nodes of the shortest path
 
         # define the constant (parameters needed to be tested and revised)
-        STRAIGHT = 0.5   # the time taken to go straight line per length unit
-        TURN = 0.3       # the time taken to turn left or turn right per time
+        STRAIGHT = self.STRAIGHT   # the time taken to go straight line per length unit
+        TURN = self.TURN       # the time taken to turn left or turn right per time
 
         # dist[i] = a dict {the adj_node : the shortest distance from nd_from passing the adj_node to i}
         # record the shortest distance between the path from nd_from to any point from each of its adjacent point
@@ -233,43 +258,120 @@ class Maze:
             print("ModeError")
             return None
 
+        # you need to run BFS_two_points function when using this, so try to use this function at most one time
+    def __getScore(self, endpoint):
+        path = self.__BFS_two_points(self.getStartPoint().getIndex(), endpoint)
+        north_south_dist = 0
+        west_east_dist = 0
+        for i in range (0, len(path) - 1):
+            now_dir = self.get_two_point_Direction(path[i], path[i + 1]) 
+            now_dist = self.nd_dict[path[i]].getDistance(path[i + 1])
+            
+            if now_dir == Direction.NORTH:
+                north_south_dist += now_dist
+            elif now_dir == Direction.SOUTH:
+                north_south_dist -= now_dist
+            elif now_dir == Direction.WEST:
+                west_east_dist -= now_dist
+            elif now_dir == Direction.EAST:
+                west_east_dist += now_dist
+            else :
+                print("GetScore_DirectionError")
+
+        return abs(north_south_dist) + abs(west_east_dist)
+
+    def __setAllScore(self):
+        if self.DeadEndsValue == {}:  # is empty, saving time
+            start = self.getStartPoint().getIndex()
+            for deadend in self.DeadEnds:
+                if deadend != start:
+                    self.DeadEndsValue[deadend] = self.__getScore(deadend)
+                else:
+                    self.DeadEndsValue[deadend] = 0
+
+        return self.DeadEndsValue 
+
+    def __setDeadEndsDistance(self):
+        if self.DeadEndDist == {}: # if empty
+            for dead in self.DeadEnds:
+                _dist_dict = {}
+                # return the shortest distance from "dead" to all points
+                # note that if dead == 1 then nd_to must not be 1 (NoNeedToBFSError) so we let it be 2
+                all_dist = self.__BFS_two_points(dead, nd_to = 1 if dead != 1 else 2, mode = 2) 
+                for another_dead in self.DeadEnds:
+                    if another_dead != dead:
+                        _dist_dict[another_dead] = all_dist[another_dead]
+                self.DeadEndDist[dead] = _dist_dict
+        
+        return self.DeadEndDist  
+
     # run all the map
-    def Run(self):
+    def __Run(self):
         if self.DeadEnds[0] != self.getStartPoint().getIndex():
             print ("StartingPointError")
             return 0
 
+        self.__setAllScore()
+        self.__setDeadEndsDistance()
+
         shortest_path = []
         INFTY = 1e5
-        shortest_dist = INFTY
+        shortest_dist = INFTY   # shortest given the value
+        max_score = 0
+        time_constraint = self.time_constraint
+        REV = self.REVERSE
 
-        self.setDeadEndsDistance()
-
-        def permutation(now, end, total_dist, _path):
+        def permutation(now, end, total_dist, _path, _score, no_time = False):
             nonlocal shortest_path
             nonlocal shortest_dist
+            nonlocal time_constraint
+            nonlocal max_score
             if now == end:
-                if total_dist < shortest_dist:
+                # we first consider the best score case, if we have the same score, we choose the total_dist is the least one
+                if (_score > max_score) or (_score == max_score and total_dist < shortest_dist):
                     shortest_dist = total_dist
                     shortest_path = _path[:]   # THIS LINE deep copy!!!
+                    max_score = _score
                 pass
             else:
                 for i in range(now, end):
                     _path[now], _path[i] = _path[i], _path[now]  # swap the position
-                    if now != 0:
-                        total_dist += self.DeadEndDist[_path[now - 1]][_path[now]]
-                    if total_dist <= shortest_dist: # cut for better efficiency
-                        permutation(now + 1, end, total_dist, _path)
-                    if now != 0:
-                        total_dist -= self.DeadEndDist[_path[now - 1]][_path[now]]
+                    total_dist += self.DeadEndDist[_path[now - 1]][_path[now]]
+
+                    if now > 1:
+                        total_dist += REV 
+
+                    # if we have no time, we set no_time = True, not no_time for better efficiency (?)
+                    if (not no_time) and total_dist > time_constraint:
+                        no_time = True
+
+                    # if we still have time, add score to _score
+                    if not no_time:      
+                        _score += self.DeadEndsValue[_path[now]]
+                    
+                    # three conditions to enter the next permutation (recursion), properly cut for better efficiency
+                    # condition 1 : if we still have time
+                    # condition 2 : if we have better score
+                    # condition 3 : if we have the same score but we have shortest_dist in the total map
+                    if (not no_time) or _score > max_score or (_score == max_score and total_dist <= shortest_dist):
+                        permutation(now + 1, end, total_dist, _path, _score, no_time)
+                    
+                    if now > 1:
+                        total_dist -= REV
+
+                    # if we still have time, remember to substract score to _score
+                    if not no_time:
+                        _score -= self.DeadEndsValue[_path[now]]         
+
+                    total_dist -= self.DeadEndDist[_path[now - 1]][_path[now]]
                     _path[now], _path[i] = _path[i], _path[now]  # swap back to the original position
                 pass
 
-        permutation(1, len(self.DeadEnds), 0, self.DeadEnds)
+        permutation(1, len(self.DeadEnds), 0, self.DeadEnds, 0, no_time = False)
 
-        return [shortest_path, shortest_dist]
+        return [shortest_path, shortest_dist, max_score]
 
-    def getAction(self, car_dir, nd_from, nd_to):
+    def __getAction(self, car_dir, nd_from, nd_to):
         # TODO : get the car action
         # Tips : return an action and the next direction of the car if the nd_to is the Successor of nd_to
 		# If not, print error message and return 0
@@ -298,84 +400,25 @@ class Maze:
 
         return act
 
-    # the same as what we have implemented in the Node class
-    def get_two_point_Diection(self, nd_from, nd_to):
-        return self.nd_dict[nd_from].getDirection(nd_to)
-
-    '''
-    def strategy(self, nd):
-        return self.BFS(nd)
-
-    def strategy_2(self, nd_from, nd_to):
-        return self.BFS_2(nd_from, nd_to)
-    '''
-    
-    def getDeadEnds(self):
-        return self.DeadEnds
-    
-    # you need to run BFS_two_points function when using this, so try to use this function at most one time
-    def getScore(self, endpoint):
-        path = self.BFS_two_points(self.getStartPoint().getIndex(), endpoint)
-        north_south_dist = 0
-        west_east_dist = 0
-        for i in range (0, len(path) - 1):
-            now_dir = self.get_two_point_Diection(path[i], path[i + 1]) 
-            now_dist = self.nd_dict[path[i]].getDistance(path[i + 1])
-            
-            if now_dir == Direction.NORTH:
-                north_south_dist += now_dist
-            elif now_dir == Direction.SOUTH:
-                north_south_dist -= now_dist
-            elif now_dir == Direction.WEST:
-                west_east_dist -= now_dist
-            elif now_dir == Direction.EAST:
-                west_east_dist += now_dist
-            else :
-                print("GetScore_DirectionError")
-
-        return abs(north_south_dist) + abs(west_east_dist)
-
-    def setAllScore(self):
-        if self.DeadEndsValue == {}:  # is empty, saving time
-            start = self.getStartPoint().getIndex()
-            for deadend in self.DeadEnds:
-                if deadend != start:
-                    self.DeadEndsValue[deadend] = self.getScore(deadend)
-                else:
-                    self.DeadEndsValue[deadend] = 0
-
-        return self.DeadEndsValue 
-
-    def setDeadEndsDistance(self):
-        if self.DeadEndDist == {}: # if empty
-            for dead in self.DeadEnds:
-                _dist_dict = {}
-                # return the shortest distance from "dead" to all points
-                # note that if dead == 1 then nd_to must not be 1 (NoNeedToBFSError) so we let it be 2
-                all_dist = self.BFS_two_points(dead, nd_to = 1 if dead != 1 else 2, mode = 2) 
-                for another_dead in self.DeadEnds:
-                    if another_dead != dead:
-                        _dist_dict[another_dead] = all_dist[another_dead]
-                self.DeadEndDist[dead] = _dist_dict
-        
-        return self.DeadEndDist
 
     # function for tests
     # will print the path of all passing nodes
     # will also print the action the car made 
-    def maze_test(self, init_dir, nd_from, nd_to):
+    def maze_test(self, nd_from, nd_to):
         
-        path = self.BFS_two_points(nd_from, nd_to)
+        path = self.__BFS_two_points(nd_from, nd_to)
         print("path:", path)
 
-        now_dir = init_dir
+        # initialize
+        now_dir = self.nd_dict[nd_from].AnyValidDirection()
+        # now_dir = init_dir
 
         action_dict = {Action.ADVANCE : "f", Action.U_TURN : "b", Action.TURN_LEFT : "l", Action.TURN_RIGHT : "r"}
         action = []
         answer_string = '' # for website testing
         for i in range (0, len(path) - 1):
-            _act = self.getAction(now_dir, path[i], path[i + 1])
-            now_dir = self.get_two_point_Diection(path[i], path[i + 1]) 
+            _act = self.__getAction(now_dir, path[i], path[i + 1])
+            now_dir = self.get_two_point_Direction(path[i], path[i + 1]) 
             action.append(action_dict[_act])
             answer_string += action_dict[_act] 
     
@@ -383,9 +426,13 @@ class Maze:
         print(answer_string)
         pass
     
+    def get_two_point_distance(self, nd_from, nd_to):
+        list = self.__BFS_two_points(nd_from, 0, mode = 2)
+        return list[nd_to]
+
     # almost the same as maze_test, will be used in all_maze_test
-    def action_two_points(self, init_dir, nd_from, nd_to, *, first_step_is_back = False):
-        path = self.BFS_two_points(nd_from, nd_to)
+    def __action_two_points(self, init_dir, nd_from, nd_to, *, first_step_is_back = False):
+        path = self.__BFS_two_points(nd_from, nd_to)
         now_dir = init_dir
 
         action_dict = {Action.ADVANCE : "f", Action.U_TURN : "b", Action.TURN_LEFT : "l", Action.TURN_RIGHT : "r"}
@@ -393,60 +440,65 @@ class Maze:
         for i in range (0, len(path) - 1):
             if first_step_is_back and i == 0:
                 answer_string += 'b'
+            elif (not first_step_is_back) and i == 0:  # to delete the first 'f'
+                continue
             else:
-                _act = self.getAction(now_dir, path[i], path[i + 1])
-                now_dir = self.get_two_point_Diection(path[i], path[i + 1]) 
+                _act = self.__getAction(now_dir, path[i], path[i + 1])
+                now_dir = self.get_two_point_Direction(path[i], path[i + 1]) 
                 answer_string += action_dict[_act] 
 
         return answer_string
 
-    def all_maze_test(self):
-        run_result = self.Run()
+    def all_maze_test(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
+        run_result = self.__Run()
         total_path = run_result[0]
-        # define the reverse time for the car per time
-        REV = 0.8
-        total_cost = run_result[1] + REV * (len(total_path) - 2)
+        total_cost = run_result[1] 
+        total_score = run_result[2]
         total_action = ''
         now_direction = self.getStartDirection()
         
         for i in range(0, len(total_path) - 1):
-            _two_points_ans_string = self.action_two_points(now_direction, total_path[i], total_path[i + 1],\
+            _two_points_ans_string = self.__action_two_points(now_direction, total_path[i], total_path[i + 1],\
                                                             first_step_is_back = True if i != 0 else 0)
             now_direction = self.nd_dict[total_path[i + 1]].AnyValidDirection()
 
             total_action += _two_points_ans_string     
 
-        print("Deadend order", total_path)
-        print("Total time cost", total_cost)
-        print("Total_action", total_action)
+        # three mode for testing
+        if print_order:
+            print("Deadend order", total_path)
+        if print_time_cost:
+            print("Total time cost", total_cost)
+        if print_action: 
+            print("Total_action", total_action)
+        if print_score:
+            print("Total Score", total_score)
+        if print_detail:
+            for i in range(0, len(total_path) - 1):
+                last = total_path[i]
+                now = total_path[i + 1]
+                print("The distance between {} and {} is {}".format(last, now, self.get_two_point_distance(last, now)))
+                print("The score of tne node {} is {}".format(now, self.DeadEndsValue[now]))
+
         return total_action
 
 # for test
 if __name__ == '__main__':
 
+    help(Maze)
+
     begin = time.time()
     # medium_maze.csv is in the file
-    #_maze = Maze('medium_maze.csv')  
-    _maze = Maze('Test1.csv')
+    _maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
+    #_maze = Maze('Test1.csv')
     #_maze = Maze('Test2.csv')
     #_maze = Maze('Self_test1.csv')
 
-    # print(_maze.getStartDirection())
-
-    # print(_maze.BFS_two_points(1, 53, mode = 2))
-    # print(_maze.getDeadEnds())
-    # print(_maze.getAction(Direction.NORTH, 10, 11))
-    #_maze.maze_test(Direction.EAST, 9, 7)
-    #_maze.maze_test(Direction.WEST, 1, 53)
-    #_maze.maze_test(Direction.WEST, 1, 52)
-    #_maze.maze_test(Direction.WEST, 1, 6)
-
-    # print(_maze.setAllScore())
-    # print(_maze.maze_test(Direction.NORTH, 1, 2))
-
-    #print(_maze.setDeadEndsDistance())
-
+    # print(_maze.maze_test(1, 52))
+    # print(_maze.get_two_point_distance(1, 12))
     print(_maze.all_maze_test())
+    
     end = time.time()
-
     print(end - begin)
+
+    
