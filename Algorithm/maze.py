@@ -30,7 +30,7 @@ class Maze:
         TURN : the time taken to turn left/right per time (default : 0.3)
         REVERSE : the time to reverse per time (default : 0.8)
         starting_point : starting point index (default : 1)
-        time_constraint : time constraint on the map (default : INFTY)
+        time_constraint : time constraint on the map (default : 90)
     
     If we want to test the correctness of the program, we can use the following method:
     all_maze_test(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
@@ -44,7 +44,7 @@ class Maze:
         
     this function will return a string which represents the total action the car should made.
     '''
-    def __init__(self, filepath, *, STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 1e5):
+    def __init__(self, filepath, *, STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90):
         # TODO : read file and implement a data structure you like
 		# For example, when parsing raw_data, you may create several Node objects.  
 		# Then you can store these objects into self.nodes.  
@@ -502,8 +502,8 @@ if __name__ == '__main__':
     begin = time.time()
     # medium_maze.csv is in the file
     #_maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
-    _maze = Maze('Test1.csv')
-    #_maze = Maze('Test2.csv')
+    #_maze = Maze('Test1.csv', time_constraint = 100)
+    _maze = Maze('Test2.csv')
     #_maze = Maze('Self_test1.csv')
 
     # print(_maze.maze_test(1, 52))
