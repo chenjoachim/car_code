@@ -87,7 +87,7 @@ void adjust(){
       if(cnt_step>=num_of_step)
       {
         cur_mode=STOPPED;
-        Serial.print("You Should FUCKING STOP!!!! ");
+        Serial.print("You Should STOP!!!! ");
         Serial.print(cnt_step);
         Serial.print(">=");
         Serial.println(num_of_step);
@@ -109,7 +109,8 @@ void adjust(){
       }
       else if(turn_mode[cnt_step]==STRAIGHT)
       {
-        delay(300);
+        MotorWrite(60,80);
+        delay(600);
       }
       cnt_step++;
       /*if(turn_mode[cnt_step]==STRAIGHT)cnt_step++;
@@ -236,6 +237,7 @@ void loop() {
     else if (ss[0]>='0'&& ss[0]<='9')
     {
       num_of_step=0;
+      cnt_step=0;
       for(int i=0;i<ss.length();i++)
       {
         num_of_step*=10;
