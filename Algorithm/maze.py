@@ -33,7 +33,7 @@ class Maze:
         time_constraint : time constraint on the map (default : 90)
     
     If we want to test the correctness of the program, we can use the following method:
-    all_maze_test(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
+    RunAllMaze(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
         If you only need to get the answer, you just use .all_maze_test() to get the answer.
         If you need to check what the problem is, there are five modes to check our tests:
             print_order : print the order of the passing deadends
