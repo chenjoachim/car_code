@@ -416,7 +416,7 @@ class Maze:
     # function for tests
     # will print the path of all passing nodes
     # will also print the action the car made 
-    def maze_test(self, nd_from, nd_to):
+    def MazeTest(self, nd_from, nd_to):
         
         path = self.__BFS_two_points(nd_from, nd_to)
         print("path:", path)
@@ -438,7 +438,7 @@ class Maze:
         print(answer_string)
         pass
     
-    def get_two_point_distance(self, nd_from, nd_to):
+    def GetTwoPointDistance(self, nd_from, nd_to):
         list = self.__BFS_two_points(nd_from, 0, mode = 2)
         return list[nd_to]
 
@@ -461,7 +461,7 @@ class Maze:
 
         return answer_string
 
-    def all_maze_test(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
+    def RunAllMaze(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
         run_result = self.__Run()
         total_path = run_result[0]
         total_cost = run_result[1] 
@@ -508,7 +508,7 @@ if __name__ == '__main__':
 
     # print(_maze.maze_test(1, 52))
     # print(_maze.get_two_point_distance(1, 12))
-    print(_maze.all_maze_test(print_order = True, print_time_cost = True))
+    print(_maze.RunAllMaze(print_score = True))
     
     end = time.time()
     print(end - begin)
