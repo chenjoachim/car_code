@@ -28,6 +28,7 @@ class bluetooth:
         # send = 's'.encode("utf-8")
         send = output.encode("utf-8")
         self.ser.write(send)
+        print(output, "send!")
 
     '''
     This part may not be needed

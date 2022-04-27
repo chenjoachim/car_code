@@ -6,8 +6,8 @@ import time
 
 # hint: You may design additional functions to execute the input command, which will be helpful when debugging :)
 
-class interface:
-    def __init__(self):
+class interface():
+    def __init__(self, route):
         print("")
         print("Arduino Bluetooth Connect Program.")
         print("")
@@ -18,13 +18,19 @@ class interface:
                 self.ser.disconnect()
                 quit()
             port = input("PC bluetooth port name: ")
-        input("Press enter to start.")
+        print("Please test RFID")
+        while (True):
+            rv = self.get_message()
+            if (rv != ""):
+                print("result:", rv)
+                k = 'J'
+                while (k != 'Y' and k != 'N'):
+                    k = str(input("Is RFID correct? (Y/N)"))
+                if (k == 'Y'):   break
+        input("Press put the car on route and press enter to start.")
         try:
-            self.ser.SerialWrite("L")
-            print("L send!")
+            self.ser.SerialWrite(route)
             time.sleep(5)
-            self.ser.SerialWrite("start")
-            print("start send!")
         except:
             print("writing fail!")
             sys.exit(1)

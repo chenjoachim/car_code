@@ -39,6 +39,7 @@ class Scoreboard:
         else:
             if UID in self.visitList:
                 print("This UID is already visited:", hex(UID))
+                print()
             else:
                 point = self.cardValue[UID]
                 self.totalScore += point
