@@ -33,7 +33,7 @@ class Maze:
         time_constraint : time constraint on the map (default : 90)
     
     If we want to test the correctness of the program, we can use the following method:
-    all_maze_test(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
+    RunAllMaze(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
         If you only need to get the answer, you just use .all_maze_test() to get the answer.
         If you need to check what the problem is, there are five modes to check our tests:
             print_order : print the order of the passing deadends
@@ -136,7 +136,7 @@ class Maze:
         INFTY = 1e5
         dist = {}
         dir = {}
-        for i in range(1, self.num + 1):
+        for i in self.nd_dict.keys():
             _dist = {}
             _dir = {}
             for neighbor in self.nd_dict[i].getSuccessors():
@@ -258,7 +258,7 @@ class Maze:
 
         elif mode == 2:  # mode 2 : find the shortest distance from nd_from to all points
             shortest_dist = {}
-            for i in range(1, self.num + 1):
+            for i in self.nd_dict.keys():
                 _short = INFTY
                 for _dir in dist[i].keys():
                     _short = min(dist[i][_dir], _short)
@@ -503,7 +503,7 @@ if __name__ == '__main__':
     # medium_maze.csv is in the file
     #_maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
     #_maze = Maze('Test1.csv', time_constraint = 100)
-    _maze = Maze('Test2.csv')
+    _maze = Maze('maze_8x6_3.csv', STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.89)
     #_maze = Maze('Self_test1.csv')
 
     # print(_maze.maze_test(1, 52))
