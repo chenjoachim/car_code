@@ -13,6 +13,9 @@ class interface():
         print("")
         self.ser = BT.bluetooth()
         port = input("PC bluetooth port name: ")
+        if (port == ""):
+            port = "COM4"
+            #TODO: change port name if needed
         while(not self.ser.do_connect(port)):
             if(port == "quit"):
                 self.ser.disconnect()
@@ -26,7 +29,10 @@ class interface():
                 k = 'J'
                 while (k != 'Y' and k != 'N'):
                     k = str(input("Is RFID correct? (Y/N)"))
-                if (k == 'Y'):   break
+                if (k == 'Y' or k == 'y'):   break
+                if (k == 'N' or k == 'n'):
+                    print("WTF?")
+                    sys.exit(1)
         input("Press put the car on route and press enter to start.")
         try:
             self.ser.SerialWrite(route)

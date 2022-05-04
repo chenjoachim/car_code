@@ -13,16 +13,18 @@ import os
 
 def main():
     try:
-        maze = mz.Maze("data/medium_maze.csv")
+        maze = mz.Maze("data/medium_maze.csv", STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.89)
         route = maze.RunAllMaze(print_score = True)
         interf = interface.interface(route)
         # TODO : Initialize necessary variables
         Node_position = 0
 
-        if (sys.argv[2] == '1'):    point = score.Scoreboard("data/UID.csv", "team_NTUEE")
-        elif (sys.argv[2] == '0'):  point = remote.Scoreboard("fakepath", "tunococ")
+        if (len(sys.argv) < 3 or sys.argv[2] == '0'):  point = remote.Scoreboard("fakepath", "tunococ")
+        elif (sys.argv[2] == '1'):    point = score.Scoreboard("data/UID.csv", "team_NTUEE")
+        # time.sleep(5)
+        #TODO: open before the game
         interf.send_action("start")
-        if (sys.argv[1] == '0'):
+        if (len(sys.argv) < 2 or sys.argv[1] == '0'):
             print("Mode 0: for treasure-hunting")
             # TODO : for treasure-hunting, which encourages you to hunt as many scores as possible
             while (True):

@@ -503,7 +503,7 @@ if __name__ == '__main__':
     # medium_maze.csv is in the file
     #_maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
     #_maze = Maze('Test1.csv', time_constraint = 100)
-    _maze = Maze('maze_8x6_3.csv', STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.89)
+    _maze = Maze('medium_maze.csv', STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.89)
     #_maze = Maze('Self_test1.csv')
 
     # print(_maze.maze_test(1, 52))
