@@ -319,6 +319,10 @@ class Maze:
 
     # run all the map
     def __Run(self):
+        for i in range(1, len(self.DeadEnds)):
+            if self.DeadEnds[i] == self.getStartPoint().getIndex():
+                self.DeadEnds[0], self.DeadEnds[i] = self.DeadEnds[i], self.DeadEnds[0]
+
         if self.DeadEnds[0] != self.getStartPoint().getIndex():
             print ("StartingPointError")
             return 0
@@ -333,17 +337,24 @@ class Maze:
         time_constraint = self.time_constraint
         REV = self.REVERSE
 
+        time_cost = 0
+        tmp_time_cost = 0
+
         def permutation(now, end, total_dist, _path, _score, no_time = False):
             nonlocal shortest_path
             nonlocal shortest_dist
             nonlocal time_constraint
             nonlocal max_score
+            nonlocal time_cost
+            nonlocal tmp_time_cost
+
             if now == end:
                 # we first consider the best score case, if we have the same score, we choose the total_dist is the least one
                 if (_score > max_score) or (_score == max_score and total_dist < shortest_dist):
                     shortest_dist = total_dist
                     shortest_path = _path[:]   # THIS LINE deep copy!!!
                     max_score = _score
+                    time_cost = tmp_time_cost
                 pass
             else:
                 for i in range(now, end):
@@ -360,6 +371,7 @@ class Maze:
                     # if we still have time, add score to _score
                     if not no_time:      
                         _score += self.DeadEndsValue[_path[now]]
+                        tmp_time_cost = total_dist
                     
                     # three conditions to enter the next permutation (recursion), properly cut for better efficiency
                     # condition 1 : if we still have time
@@ -381,7 +393,7 @@ class Maze:
 
         permutation(1, len(self.DeadEnds), 0, self.DeadEnds, 0, no_time = False)
 
-        return [shortest_path, shortest_dist, max_score]
+        return [shortest_path, shortest_dist, max_score, time_cost]
 
     def __getAction(self, car_dir, nd_from, nd_to):
         # TODO : get the car action
@@ -461,11 +473,13 @@ class Maze:
 
         return answer_string
 
-    def RunAllMaze(self, *, print_order = False, print_time_cost = False, print_action = False, print_score = False, print_detail = False):
+    def RunAllMaze(self, *, print_order = False, print_total_cost = False, print_action = False, print_score = False,
+                    print_detail = False, print_time_cost = False):
         run_result = self.__Run()
         total_path = run_result[0]
         total_cost = run_result[1] 
         total_score = run_result[2]
+        time_cost = run_result[3]
         total_action = ''
         now_direction = self.getStartDirection()
         
@@ -479,7 +493,7 @@ class Maze:
         # three mode for testing
         if print_order:
             print("Deadend order", total_path)
-        if print_time_cost:
+        if print_total_cost:
             print("Total time cost", total_cost)
         if print_action: 
             print("Total_action", total_action)
@@ -489,8 +503,10 @@ class Maze:
             for i in range(0, len(total_path) - 1):
                 last = total_path[i]
                 now = total_path[i + 1]
-                print("The distance between {} and {} is {}".format(last, now, self.get_two_point_distance(last, now)))
+                print("The distance between {} and {} is {}".format(last, now, self.GetTwoPointDistance(last, now)))
                 print("The score of tne node {} is {}".format(now, self.DeadEndsValue[now]))
+        if print_time_cost:
+            print("Actual time cost", time_cost)
 
         return total_action
 
@@ -501,14 +517,14 @@ if __name__ == '__main__':
 
     begin = time.time()
     # medium_maze.csv is in the file
-    #_maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
+    #_maze = Maze('medium_maze.csv', STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.8, time_constraint = 30)  
     #_maze = Maze('Test1.csv', time_constraint = 100)
-    _maze = Maze('maze_8x6_3.csv', STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.89)
+    _maze = Maze('maze_8x6_3.csv', STRAIGHT = 0.517, TURN = 0.412, REVERSE = 0.687, time_constraint = 95)
     #_maze = Maze('Self_test1.csv')
 
     # print(_maze.maze_test(1, 52))
     # print(_maze.get_two_point_distance(1, 12))
-    print(_maze.RunAllMaze(print_score = True))
+    print(_maze.RunAllMaze(print_score = True, print_time_cost = True, print_order = True))
     
     end = time.time()
     print(end - begin)
