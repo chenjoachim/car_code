@@ -16,7 +16,7 @@ def main():
         #TODO: !!!!!!!!!!!!!!!DON'T FORGET TO CHANGE MAZE NAME!!!!!!!!!!!!!!!!!!
         #=================================HERE==================================
         #NORMAL MODE (V = 9.0)
-        maze = mz.Maze("data/medium_maze.csv", STRAIGHT = 0.512, TURN = 0.317, REVERSE = 0.687)
+        maze = mz.Maze("data/maze_8x6_3.csv", STRAIGHT = 0.512, TURN = 0.317, REVERSE = 0.687)
 
         #FAST MODE (V = )
         # maze = mz.Maze("data/maze_8x6_3.csv", )
