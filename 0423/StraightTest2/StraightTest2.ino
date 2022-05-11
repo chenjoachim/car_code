@@ -22,7 +22,7 @@ int STBY = 5;
 int BIN1 = 6;
 int BIN2 = 7;
 int PWMB = 8;
-int num_of_step=0;
+int num_of_step=1;
 enum running_mode
 {
   STARTED,
@@ -38,7 +38,7 @@ enum turning_mode
 };
 running_mode cur_mode=STOPPED;
 turning_mode* turn_mode_input;
-turning_mode turn_mode_cur=NA;
+turning_mode turn_mode_cur=RIGHT;
 //===============================for debug
 bool debug = false;
 //===========================================
@@ -118,7 +118,7 @@ void adjust(){
       if(turning==1)
       {
         cnt_step++;//the car has turned -> next step
-        turn_mode_cur = turn_mode_input[min(cnt_step,num_of_step-1)];
+        //turn_mode_cur = turn_mode_input[min(cnt_step,num_of_step-1)];
       }
       turning = 0;
       double V_s = 100; // the velocity of going straight (CHANGE HERE!)
@@ -148,17 +148,27 @@ void adjust(){
       if(turn_mode_cur==LEFT)
       {
         MotorWrite(80, -80);
+        Serial.println("Success");
         delay(300);
+        MotorWrite(100,100);
+        delay(1000);
+        cur_mode=STOPPED;
       }
       else if(turn_mode_cur==RIGHT)
       {
         MotorWrite(-80, 80);
         delay(300);
+        MotorWrite(100,100);
+        delay(1000);
+        cur_mode=STOPPED;
       }
       else if(turn_mode_cur==RETURN)
       {
         MotorWrite(-80,80);
         delay(750);
+        MotorWrite(100,100);
+        delay(1000);
+        cur_mode=STOPPED;
       }
       else if(turn_mode_cur==STRAIGHT)
       {
@@ -285,9 +295,7 @@ void loop() {
   switch(cur_mode)
   {
     case STARTED:
-      MotorWrite(209,200);
-      delay(5000);
-      cur_mode=STOPPED;
+      adjust();
       break;
     case STOPPED:
       MotorWrite(0.0,0.0);

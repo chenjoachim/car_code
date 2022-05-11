@@ -66,7 +66,7 @@ void StringToCommands(String ss)
 {
     cnt_step=0;
     num_of_step=ss.length();
-    if(turn_mode_input!=NULL)delete [] turn_mode_input;
+    if(turn_mode_input!=NULL)delete [] turn_mode_input;//clear last input
     turn_mode_input=new turning_mode[num_of_step];
     for(int i=0;i<ss.length();i++)
     {
@@ -275,6 +275,7 @@ void loop() {
     Serial.println(ss);
     if(ss=="start")
     {
+      turn_mode_cur=NA;
       cur_mode=STARTED;
       cnt_step=0;
     }
