@@ -20,7 +20,7 @@ class Scoreboard:
     '''
     The Scoreboard class connects to the server socket and enables updating score by sending UID.
     '''
-    def __init__(self, filepath, teamName, host="http://140.112.175.15:3000"):
+    def __init__(self, filepath, teamName, host="http://192.168.50.192:3000"):
     
         # INIT VARIABLES
         self.totalScore = 0

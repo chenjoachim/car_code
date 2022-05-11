@@ -13,7 +13,15 @@ import os
 
 def main():
     try:
-        maze = mz.Maze("data/medium_maze.csv", STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.89)
+        #TODO: !!!!!!!!!!!!!!!DON'T FORGET TO CHANGE MAZE NAME!!!!!!!!!!!!!!!!!!
+        #=================================HERE==================================
+        #NORMAL MODE (V = 9.0)
+        maze = mz.Maze("data/medium_maze.csv", STRAIGHT = 0.512, TURN = 0.317, REVERSE = 0.687)
+
+        #FAST MODE (V = )
+        # maze = mz.Maze("data/maze_8x6_3.csv", )
+        #=================================HERE==================================
+
         route = maze.RunAllMaze(print_score = True)
         interf = interface.interface(route)
         # TODO : Initialize necessary variables
@@ -22,7 +30,7 @@ def main():
         if (len(sys.argv) < 3 or sys.argv[2] == '0'):  point = remote.Scoreboard("fakepath", "tunococ")
         elif (sys.argv[2] == '1'):    point = score.Scoreboard("data/UID.csv", "team_NTUEE")
         # time.sleep(5)
-        #TODO: open before the game
+        # TODO: open before the game
         interf.send_action("start")
         if (len(sys.argv) < 2 or sys.argv[1] == '0'):
             print("Mode 0: for treasure-hunting")
