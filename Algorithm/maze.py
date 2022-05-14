@@ -489,7 +489,7 @@ class Maze:
             for i in range(0, len(total_path) - 1):
                 last = total_path[i]
                 now = total_path[i + 1]
-                print("The distance between {} and {} is {}".format(last, now, self.get_two_point_distance(last, now)))
+                print("The distance between {} and {} is {}".format(last, now, self.GetTwoPointDistance(last, now)))
                 print("The score of tne node {} is {}".format(now, self.DeadEndsValue[now]))
 
         return total_action
@@ -503,12 +503,12 @@ if __name__ == '__main__':
     # medium_maze.csv is in the file
     #_maze = Maze('medium_maze.csv', STRAIGHT = 0.5, TURN = 0.3, REVERSE = 0.8, starting_point = 1, time_constraint = 90)  
     #_maze = Maze('Test1.csv', time_constraint = 100)
-    _maze = Maze('medium_maze.csv', STRAIGHT = 0.62, TURN = 0.4, REVERSE = 0.89)
+    _maze = Maze('maze_8x6_3.csv', STRAIGHT = 0.517, TURN = 0.412, REVERSE = 0.687, time_constraint = 95)
     #_maze = Maze('Self_test1.csv')
 
     # print(_maze.maze_test(1, 52))
     # print(_maze.get_two_point_distance(1, 12))
-    print(_maze.RunAllMaze(print_score = True))
+    print(_maze.RunAllMaze(print_score = True, print_order = True, print_detail = True))
     
     end = time.time()
     print(end - begin)
