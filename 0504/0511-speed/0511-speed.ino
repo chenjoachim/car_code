@@ -121,9 +121,9 @@ void adjust(){
         turn_mode_cur = turn_mode_input[min(cnt_step,num_of_step-1)];
       }
       turning = 0;
-      double V_sR = 230; // the velocity of going straight (CHANGE HERE!)
-      double V_sL = 220; 
-      double K_p = 20; // P control term (CHANGE HERE!)
+      double V_sR = 235; // the velocity of going straight (CHANGE HERE!)
+      double V_sL = 230; 
+      double K_p = 15; // P control term (CHANGE HERE!)
       double K_i = 0;  // I control term (CHANGE HERE!)
       double K_d = 0;  // D control term (CHANGE HERE!)
 
@@ -161,7 +161,11 @@ void adjust(){
       else if(turn_mode_cur==RETURN)
       {
         MotorWrite(-120,120);
-        delay(650);
+        delay(660);
+        /*debug
+        MotorWrite(100,100);
+        delay(1000);
+        //*/
       }
       else if(turn_mode_cur==STRAIGHT)
       {

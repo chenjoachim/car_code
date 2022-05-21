@@ -122,7 +122,7 @@ void adjust(){
       }
       turning = 0;
       double V_sR = 230; // the velocity of going straight (CHANGE HERE!)
-      double V_sL = 220; 
+      double V_sL = 225; 
       double K_p = 20; // P control term (CHANGE HERE!)
       double K_i = 0;  // I control term (CHANGE HERE!)
       double K_d = 0;  // D control term (CHANGE HERE!)
@@ -151,21 +151,25 @@ void adjust(){
       if(turn_mode_cur==LEFT)
       {
         MotorWrite(120, -120);
-        delay(360);
+        delay(330);
       }
       else if(turn_mode_cur==RIGHT)
       {
         MotorWrite(-120, 120);
-        delay(360);
+        delay(330);
       }
       else if(turn_mode_cur==RETURN)
       {
         MotorWrite(-120,120);
-        delay(650);
+        delay(660);
+        /*debug
+        MotorWrite(100,100);
+        delay(1000);
+        //*/
       }
       else if(turn_mode_cur==STRAIGHT)
       {
-        MotorWrite(230,220);
+        MotorWrite(230,225);
         delay(155);
       }
       turning=1;
