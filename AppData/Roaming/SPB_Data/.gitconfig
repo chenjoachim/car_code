@@ -1,0 +1,12 @@
+[user]
+	email = lllion66666@gmail.com
+	name = chenjoachim
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+[safe]
+	directory = E:/NTU/110-2/計算機概論/website_git/chenjoachim.github.io
+	directory = E:/NTU/111-1/網服/pretty-calendar/wp_project-calendar
+	directory = E:/NTU/111-1/網服/Game/LittleGame
